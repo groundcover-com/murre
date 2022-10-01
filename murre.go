@@ -117,12 +117,14 @@ func (m *Murre) sort(stats []*Stats) {
 		sort.Slice(stats, func(i, j int) bool {
 			return stats[i].MemoryBytes > stats[j].MemoryBytes
 		})
+		return 
 	}
 
 	if m.config.SortBy.Cpu {
 		sort.Slice(stats, func(i, j int) bool {
 			return stats[i].CpuUsage > stats[j].CpuUsage
 		})
+		return 
 	}
 
 	//default is to sort by cpu

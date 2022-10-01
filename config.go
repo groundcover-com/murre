@@ -69,8 +69,8 @@ func newConfig(v *viper.Viper, args []string) (*Config, error) {
 			Container: v.GetString("container"),
 		},
 		SortBy: SortBy{
-			Cpu: v.GetBool("cpu"),
-			Mem: v.GetBool("mem"),
+			Cpu: v.GetBool("sortby-cpu"),
+			Mem: v.GetBool("sortby-mem"),
 		},
 		Kubeconfig: v.GetString("kubeconfig"),
 	}, nil
