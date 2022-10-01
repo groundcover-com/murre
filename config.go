@@ -13,30 +13,30 @@ var (
 	defaultRefreshInterval = time.Second * 10
 )
 
-type filter struct {
+type Filter struct {
 	// filter by namespace
-	namespace string
+	Namespace string
 	// filter by pod
-	pod string
+	Pod string
 	// filter by container
-	container string
+	Container string
 }
 
-type sortBy struct {
+type SortBy struct {
 	// sort by cpu
-	cpu bool
+	Cpu bool
 	// sort by memory
-	mem bool
+	Mem bool
 }
 
-type config struct {
-	refreshInterval time.Duration
-	filters         filter
-	sortBy          sortBy
-	kubeconfig      string
+type Config struct {
+	RefreshInterval time.Duration
+	Filters         Filter
+	SortBy          SortBy
+	Kubeconfig      string
 }
 
-func newConfig(v *viper.Viper, args []string) (*config, error) {
+func newConfig(v *viper.Viper, args []string) (*Config, error) {
 	flagSet := pflag.NewFlagSet("murre", pflag.ExitOnError)
 
 	flagSet.Duration("interval", defaultRefreshInterval, "seconds to wait between updates (default '10s')")
@@ -61,17 +61,17 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
-	return &config{
-		refreshInterval: v.GetDuration("interval"),
-		filters: filter{
-			namespace: v.GetString("namespace"),
-			pod:       v.GetString("pod"),
-			container: v.GetString("container"),
+	return &Config{
+		RefreshInterval: v.GetDuration("interval"),
+		Filters: Filter{
+			Namespace: v.GetString("namespace"),
+			Pod:       v.GetString("pod"),
+			Container: v.GetString("container"),
 		},
-		sortBy: sortBy{
-			cpu: v.GetBool("cpu"),
-			mem: v.GetBool("mem"),
+		SortBy: SortBy{
+			Cpu: v.GetBool("cpu"),
+			Mem: v.GetBool("mem"),
 		},
-		kubeconfig: v.GetString("kubeconfig"),
+		Kubeconfig: v.GetString("kubeconfig"),
 	}, nil
 }

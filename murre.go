@@ -1,7 +1,11 @@
 package main
 
 import (
+	"sort"
 	"time"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type DataFetcher interface {
@@ -25,42 +29,106 @@ type Murre struct {
 	// ...
 	fetcher    DataFetcher
 	ui         UI
-	interval   time.Duration
+	config     *Config
 	containers map[string]*Container
+	stopCh     chan struct{}
 }
 
-func NewMurre(fetcher DataFetcher, ui UI, interval time.Duration) *Murre {
-	if fetcher == nil {
-		panic("fetcher is nil")
+func NewMurre(ui UI, config *Config) (*Murre, error) {
+	// use the current context in kubeconfig
+	kubecfg, err := clientcmd.BuildConfigFromFlags("", config.Kubeconfig)
+	if err != nil {
+		return nil, err
 	}
 
-	if interval <= 0 {
-		panic("interval is invalid")
+	// create the clientset
+	clientset, err := kubernetes.NewForConfig(kubecfg)
+	if err != nil {
+		return nil, err
+	}
+
+	fetcher := NewFetcher(clientset)
+	if fetcher == nil {
+		return nil, err
 	}
 
 	return &Murre{
 		fetcher:    fetcher,
 		ui:         ui,
-		interval:   interval,
+		config:     config,
 		containers: make(map[string]*Container),
-	}
+		stopCh:     make(chan struct{}),
+	}, nil
 
 }
 
 func (m *Murre) Run() error {
-	ticker := time.NewTicker(m.interval)
-
-	for range ticker.C {
-		err := m.updateMetrics()
-		if err != nil {
-			return err
-		}
-		stats := m.getStats()
-		//stats = m.sort(stats)
-		m.ui.Update(stats)
+	// first tick
+	err := m.tick()
+	if err != nil {
+		return err
 	}
 
+	ticker := time.NewTicker(m.config.RefreshInterval)
+
+	for {
+		select {
+		case <-ticker.C:
+			err := m.tick()
+			if err != nil {
+				return err
+			}
+		case <-m.stopCh:
+			return nil
+		}
+	}
+}
+
+func (m *Murre) Stop() {
+	close(m.stopCh)
+}
+
+func (m *Murre) tick() error {
+	err := m.updateMetrics()
+	if err != nil {
+		return err
+	}
+	stats := m.getStats()
+	stats = m.filter(stats)
+	m.sort(stats)
+	m.ui.Update(stats)
 	return nil
+}
+func (m *Murre) filter(stats []*Stats) []*Stats {
+	filterdStats := make([]*Stats, 0)
+	for _, s := range stats {
+		isNamespaceMatch := m.config.Filters.Namespace == "" || m.config.Filters.Namespace == s.Namespace
+		isPodMatch := m.config.Filters.Pod == "" || m.config.Filters.Pod == s.PodName
+		isContainerMatch := m.config.Filters.Container == "" || m.config.Filters.Container == s.ContainerName
+		if isNamespaceMatch && isPodMatch && isContainerMatch {
+			filterdStats = append(filterdStats, s)
+		}
+	}
+	return filterdStats
+}
+
+func (m *Murre) sort(stats []*Stats) {
+	if m.config.SortBy.Mem {
+		sort.Slice(stats, func(i, j int) bool {
+			return stats[i].MemoryBytes > stats[j].MemoryBytes
+		})
+	}
+
+	if m.config.SortBy.Cpu {
+		sort.Slice(stats, func(i, j int) bool {
+			return stats[i].CpuUsage > stats[j].CpuUsage
+		})
+	}
+
+	//default is to sort by cpu
+	sort.Slice(stats, func(i, j int) bool {
+		return stats[i].CpuUsage > stats[j].CpuUsage
+	})
 }
 
 func (m *Murre) getStats() []*Stats {

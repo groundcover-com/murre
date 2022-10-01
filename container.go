@@ -24,7 +24,7 @@ type Stats struct {
 }
 
 func (c *Container) GetStats() *Stats {
-	if c.cpuUsage == 0 {
+	if c.cpuUsage == 0 && c.memoryUsageBytes == 0 {
 		return nil
 	}
 

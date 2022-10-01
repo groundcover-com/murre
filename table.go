@@ -13,25 +13,18 @@ type Table struct {
 }
 
 func CreateNewTable() *Table {
-	newPrimitive := func(text string) tview.Primitive {
-		return tview.NewTextView().
-			SetTextAlign(tview.AlignCenter).
-			SetText(text)
-	}
 	table := tview.NewTable().SetSeparator(tview.Borders.Vertical)
 	app := tview.NewApplication()
-	dropdown := tview.NewDropDown().
-		SetLabel("Select an option (hit Enter): ").
-		SetOptions([]string{"namespace", "pod", "container", "cpu", "mem"}, nil)
-	grid := tview.NewGrid().
-		SetRows(1, 0, 1).
-		//SetColumns(30, 0, 30).
-		SetBorders(true).
-		AddItem(newPrimitive("toplite"), 0, 0, 1, 1, 0, 0, false).
-		AddItem(dropdown, 2, 0, 1, 1, 0, 0, false)
-		// Layout for screens wider than 100 cells.
-	grid.AddItem(table, 1, 0, 1, 1, 0, 100, false)
-	app.SetRoot(grid, true).EnableMouse(false)
+	app.SetRoot(table, true).EnableMouse(false)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape ||
+			event.Key() == tcell.KeyCtrlC ||
+			event.Rune() == 'Q' ||
+			event.Rune() == 'q' {
+			app.Stop()
+		}
+		return event
+	})
 	return &Table{
 		app:   app,
 		table: table,
@@ -74,9 +67,15 @@ func (t *Table) getCell(stats *Stats, column int) *tview.TableCell {
 	case 2:
 		return tview.NewTableCell(stats.ContainerName)
 	case 3:
+		if stats.CpuUsage <= 0 {
+			return tview.NewTableCell("-").SetAlign(tview.AlignCenter)
+		}
 		cpuInMcpu := stats.CpuUsage * 1000
 		return tview.NewTableCell(fmt.Sprintf("%.2fmCPU", cpuInMcpu))
 	case 4:
+		if stats.MemoryBytes <= 0 {
+			return tview.NewTableCell("-").SetAlign(tview.AlignCenter)
+		}
 		//convet bytes to MiB
 		memoryInMiB := stats.MemoryBytes / 1024 / 1024
 		return tview.NewTableCell(fmt.Sprintf("%.2fMiB", memoryInMiB))

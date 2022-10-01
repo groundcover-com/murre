@@ -7,6 +7,8 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.37.0
 	github.com/rivo/tview v0.0.0-20220911190240-55965cf21d8e
+	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.13.0
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v0.25.0
 )
@@ -45,8 +47,6 @@ require (
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.13.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
