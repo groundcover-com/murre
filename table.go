@@ -97,11 +97,13 @@ func (t *Table) getCell(stats *Stats, column int) *tview.TableCell {
 }
 
 func (t *Table) getCellColor(utilization float64) tcell.Color {
-	if utilization > 80 {
-		return tcell.ColorYellow
-	}
 	if utilization > 90 {
 		return tcell.ColorRed
 	}
+	
+	if utilization > 80 {
+		return tcell.ColorYellow
+	}
+	
 	return tcell.ColorWhite
 }
