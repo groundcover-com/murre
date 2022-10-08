@@ -14,6 +14,19 @@ const (
 	CADVISOR_PATH_TEMPLATE = "/api/v1/nodes/%s/proxy/metrics/cadvisor"
 )
 
+type Resources struct {
+	Cpu    float64
+	Memory float64
+}
+
+type ContainerResources struct {
+	PodName   string
+	Name      string
+	Namespace string
+	Image     string
+	Request   Resources
+	Limit     Resources
+}
 type NodeMetrics struct {
 	NodeName  string
 	Cpu       []*Cpu
@@ -50,6 +63,52 @@ func (f *Fetcher) GetMetrics() ([]*NodeMetrics, error) {
 	}
 
 	return metrics, nil
+}
+
+func (f *Fetcher) GetContainers() ([]*ContainerResources, error) {
+	pods, err := f.clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	containers := make([]*ContainerResources, 0)
+	for _, pod := range pods.Items {
+		for _, container := range pod.Spec.Containers {
+			requestCpu := container.Resources.Requests.Cpu()
+			requestMemory := container.Resources.Requests.Memory()
+			limitCpu := container.Resources.Limits.Cpu()
+			limitMemory := container.Resources.Limits.Memory()
+			containerResource := &ContainerResources{
+				PodName:   pod.Name,
+				Name:      container.Name,
+				Namespace: pod.Namespace,
+				Image:     container.Image,
+				Request: Resources{
+					Cpu:    0,
+					Memory: 0,
+				},
+				Limit: Resources{
+					Cpu:    0,
+					Memory: 0,
+				},
+			}
+			if requestCpu != nil {
+				containerResource.Request.Cpu = float64(requestCpu.MilliValue())
+			}
+
+			if requestMemory != nil {
+				containerResource.Request.Memory = float64(requestMemory.Value())
+			}
+			if limitCpu != nil {
+				containerResource.Limit.Cpu = float64(limitCpu.MilliValue())
+			}
+			if limitMemory != nil {
+				containerResource.Limit.Memory = float64(limitMemory.Value())
+			}
+
+			containers = append(containers, containerResource)
+		}
+	}
+	return containers, nil
 }
 
 func (f *Fetcher) getNodes() ([]string, error) {

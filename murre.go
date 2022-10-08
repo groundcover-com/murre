@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -8,8 +9,13 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	FETCH_CONTAINERS_SPEC_RATIO = 5
+)
+
 type DataFetcher interface {
 	GetMetrics() ([]*NodeMetrics, error)
+	GetContainers() ([]*ContainerResources, error)
 }
 
 type UI interface {
@@ -26,12 +32,12 @@ type ContainerStats struct {
 }
 
 type Murre struct {
-	// ...
-	fetcher    DataFetcher
-	ui         UI
-	config     *Config
-	containers map[string]*Container
-	stopCh     chan struct{}
+	fetcher      DataFetcher
+	ui           UI
+	config       *Config
+	containers   map[string]*Container
+	fetchCounter int
+	stopCh       chan struct{}
 }
 
 func NewMurre(ui UI, config *Config) (*Murre, error) {
@@ -53,11 +59,12 @@ func NewMurre(ui UI, config *Config) (*Murre, error) {
 	}
 
 	return &Murre{
-		fetcher:    fetcher,
-		ui:         ui,
-		config:     config,
-		containers: make(map[string]*Container),
-		stopCh:     make(chan struct{}),
+		fetcher:      fetcher,
+		ui:           ui,
+		config:       config,
+		containers:   make(map[string]*Container),
+		stopCh:       make(chan struct{}),
+		fetchCounter: 0,
 	}, nil
 
 }
@@ -89,7 +96,15 @@ func (m *Murre) Stop() {
 }
 
 func (m *Murre) tick() error {
-	err := m.updateMetrics()
+	defer func() {
+		m.fetchCounter++
+	}()
+	err := m.updateContainers()
+	if err != nil {
+		return err
+	}
+
+	err = m.updateMetrics()
 	if err != nil {
 		return err
 	}
@@ -99,6 +114,25 @@ func (m *Murre) tick() error {
 	m.ui.Update(stats)
 	return nil
 }
+
+func (m *Murre) updateContainers() error {
+	if m.fetchCounter%FETCH_CONTAINERS_SPEC_RATIO != 0 {
+		return nil
+	}
+
+	containers, err := m.fetcher.GetContainers()
+	if err != nil {
+		return err
+	}
+
+	for _, c := range containers {
+		container := m.getOrCreateContainer(c.Name, c.Image, c.PodName, c.Namespace)
+		container.UpdateResources(c)
+	}
+
+	return nil
+}
+
 func (m *Murre) filter(stats []*Stats) []*Stats {
 	filterdStats := make([]*Stats, 0)
 	for _, s := range stats {
@@ -117,19 +151,33 @@ func (m *Murre) sort(stats []*Stats) {
 		sort.Slice(stats, func(i, j int) bool {
 			return stats[i].MemoryBytes > stats[j].MemoryBytes
 		})
-		return 
+		return
 	}
 
 	if m.config.SortBy.Cpu {
 		sort.Slice(stats, func(i, j int) bool {
-			return stats[i].CpuUsage > stats[j].CpuUsage
+			return stats[i].CpuUsageMilli > stats[j].CpuUsageMilli
 		})
-		return 
+		return
+	}
+
+	if m.config.SortBy.CpuUtilization {
+		sort.Slice(stats, func(i, j int) bool {
+			return stats[i].CpuUsagePercent > stats[j].CpuUsagePercent
+		})
+		return
+	}
+
+	if m.config.SortBy.MemUtilization {
+		sort.Slice(stats, func(i, j int) bool {
+			return stats[i].MemoryUsagePercent > stats[j].MemoryUsagePercent
+		})
+		return
 	}
 
 	//default is to sort by cpu
 	sort.Slice(stats, func(i, j int) bool {
-		return stats[i].CpuUsage > stats[j].CpuUsage
+		return stats[i].CpuUsageMilli > stats[j].CpuUsageMilli
 	})
 }
 
@@ -178,14 +226,15 @@ func (m *Murre) updateMemory(memory []*Memory, fetchTime time.Time) {
 }
 
 func (m *Murre) getOrCreateContainerFromCpu(cpu *Cpu) *Container {
-	return m.getOrCreateContainer(cpu.Id, cpu.Name, cpu.Image, cpu.PodName, cpu.Namespace)
+	return m.getOrCreateContainer(cpu.Name, cpu.Image, cpu.PodName, cpu.Namespace)
 }
 
 func (m *Murre) getOrCreateContainerFromMemory(mem *Memory) *Container {
-	return m.getOrCreateContainer(mem.Id, mem.Name, mem.Image, mem.PodName, mem.Namespace)
+	return m.getOrCreateContainer(mem.Name, mem.Image, mem.PodName, mem.Namespace)
 }
 
-func (m *Murre) getOrCreateContainer(id, name, image, podName, namespace string) *Container {
+func (m *Murre) getOrCreateContainer(name, image, podName, namespace string) *Container {
+	id := fmt.Sprintf("%s/%s/%s", namespace, podName, name)
 	if _, ok := m.containers[id]; !ok {
 		m.containers[id] = &Container{
 			Id:        id,

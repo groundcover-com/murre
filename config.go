@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	defaultRefreshInterval = time.Second * 10
+	defaultRefreshInterval = time.Second * 5
 )
 
 type Filter struct {
@@ -25,8 +25,12 @@ type Filter struct {
 type SortBy struct {
 	// sort by cpu
 	Cpu bool
+	// sort by cpu utilization
+	CpuUtilization bool
 	// sort by memory
 	Mem bool
+	// sort by memory utilization
+	MemUtilization bool
 }
 
 type Config struct {
@@ -39,12 +43,14 @@ type Config struct {
 func newConfig(v *viper.Viper, args []string) (*Config, error) {
 	flagSet := pflag.NewFlagSet("murre", pflag.ExitOnError)
 
-	flagSet.Duration("interval", defaultRefreshInterval, "seconds to wait between updates (default '10s')")
+	flagSet.Duration("interval", defaultRefreshInterval, "seconds to wait between updates (default '5s')")
 	flagSet.String("namespace", "", "filter by namespace")
 	flagSet.String("pod", "", "filter by pod")
 	flagSet.String("container", "", "filter by container")
 	flagSet.Bool("sortby-cpu", false, "sort by cpu")
+	flagSet.Bool("sortby-cpu-util", false, "sort by cpu utilization")
 	flagSet.Bool("sortby-mem", false, "sort by memory")
+	flagSet.Bool("sortby-mem-util", false, "sort by memory utilization")
 	if home := homedir.HomeDir(); home != "" {
 		flagSet.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 	} else {
@@ -69,8 +75,10 @@ func newConfig(v *viper.Viper, args []string) (*Config, error) {
 			Container: v.GetString("container"),
 		},
 		SortBy: SortBy{
-			Cpu: v.GetBool("sortby-cpu"),
-			Mem: v.GetBool("sortby-mem"),
+			Cpu:            v.GetBool("sortby-cpu"),
+			CpuUtilization: v.GetBool("sortby-cpu-util"),
+			Mem:            v.GetBool("sortby-mem"),
+			MemUtilization: v.GetBool("sortby-mem-util"),
 		},
 		Kubeconfig: v.GetString("kubeconfig"),
 	}, nil

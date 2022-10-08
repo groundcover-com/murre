@@ -1,6 +1,8 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 type Container struct {
 	Id                         string
@@ -12,15 +14,23 @@ type Container struct {
 	lastCpuUsageSecondsTotal   float64
 	lastCpuUsageSecondsTotalTs time.Time
 	memoryUsageBytes           float64
+	cpuRequest                 float64
+	cpuLimits                  float64
+	memoryRequestBytes         float64
+	memoryLimitBytes           float64
 }
 
 type Stats struct {
-	Namespace     string
-	PodName       string
-	ContainerName string
-	CpuUsage      float64
-	MemoryBytes   float64
-	LastUpdateTs  time.Time
+	Namespace          string
+	PodName            string
+	ContainerName      string
+	CpuUsageMilli      float64
+	MemoryBytes        float64
+	LastUpdateTs       time.Time
+	MemoryLimitBytes   float64
+	CpuLimit           float64
+	MemoryUsagePercent float64
+	CpuUsagePercent    float64
 }
 
 func (c *Container) GetStats() *Stats {
@@ -28,13 +38,36 @@ func (c *Container) GetStats() *Stats {
 		return nil
 	}
 
+	cpuUsageInMillis := c.cpuUsage * 1000
+	var cpuUsagePercent float64
+	if c.cpuLimits > 0 {
+		cpuUsagePercent = cpuUsageInMillis / c.cpuLimits * 100
+	}
+
+	if cpuUsagePercent > 100 {
+		cpuUsagePercent = 100
+	}
+
+	var memoryUsagePercent float64
+	if c.memoryLimitBytes > 0 {
+		memoryUsagePercent = c.memoryUsageBytes / c.memoryLimitBytes * 100
+	}
+
+	if memoryUsagePercent > 100 {
+		memoryUsagePercent = 100
+	}
+
 	return &Stats{
-		Namespace:     c.Namespace,
-		PodName:       c.PodName,
-		ContainerName: c.Name,
-		CpuUsage:      c.cpuUsage,
-		MemoryBytes:   c.memoryUsageBytes,
-		LastUpdateTs:  c.lastCpuUsageSecondsTotalTs,
+		Namespace:          c.Namespace,
+		PodName:            c.PodName,
+		ContainerName:      c.Name,
+		CpuUsageMilli:      cpuUsageInMillis,
+		MemoryBytes:        c.memoryUsageBytes,
+		LastUpdateTs:       c.lastCpuUsageSecondsTotalTs,
+		CpuLimit:           c.cpuLimits,
+		MemoryLimitBytes:   c.memoryLimitBytes,
+		CpuUsagePercent:    cpuUsagePercent,
+		MemoryUsagePercent: memoryUsagePercent,
 	}
 }
 
@@ -43,9 +76,9 @@ func (c *Container) UpdateCpu(cpu *Cpu, fetchTime time.Time) {
 		return
 	}
 
-	if !c.lastCpuUsageSecondsTotalTs.IsZero() {
+	timeDiff := fetchTime.Sub(c.lastCpuUsageSecondsTotalTs)
+	if !c.lastCpuUsageSecondsTotalTs.IsZero() && timeDiff > 0 {
 		increaseInCpu := cpu.CpuUsageSecondsTotal - c.lastCpuUsageSecondsTotal
-		timeDiff := fetchTime.Sub(c.lastCpuUsageSecondsTotalTs)
 		c.cpuUsage = (increaseInCpu) / timeDiff.Seconds()
 	}
 
@@ -55,4 +88,11 @@ func (c *Container) UpdateCpu(cpu *Cpu, fetchTime time.Time) {
 
 func (c *Container) UpdateMemory(memory *Memory, fetchTime time.Time) {
 	c.memoryUsageBytes = memory.MemoryUsageBytes
+}
+
+func (c *Container) UpdateResources(resources *ContainerResources) {
+	c.cpuRequest = resources.Request.Cpu
+	c.cpuLimits = resources.Limit.Cpu
+	c.memoryRequestBytes = resources.Request.Memory
+	c.memoryLimitBytes = resources.Limit.Memory
 }

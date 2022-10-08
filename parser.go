@@ -13,7 +13,6 @@ const (
 )
 
 type Cpu struct {
-	Id                   string
 	Name                 string
 	Image                string
 	PodName              string
@@ -22,7 +21,6 @@ type Cpu struct {
 }
 
 type Memory struct {
-	Id               string
 	Name             string
 	Image            string
 	PodName          string
@@ -88,14 +86,14 @@ func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu 
 			case METRICS_IMAGE_LABEL:
 				cpuMetric.Image = label.GetValue()
 			case METRICS_ID_LABEL:
-				cpuMetric.Id = label.GetValue()
+				continue
 			default:
 				panic(label.GetName())
 			}
 		}
 
 		cpuMetric.CpuUsageSecondsTotal = metric.GetCounter().GetValue()
-		if cpuMetric.Name == "" || cpuMetric.PodName == "" || cpuMetric.Namespace == "" || cpuMetric.Id == "" {
+		if cpuMetric.Name == "" || cpuMetric.PodName == "" || cpuMetric.Namespace == "" {
 			//todo - dont know why this happens
 			continue
 		}
@@ -125,7 +123,7 @@ func (p *Parser) parseMemoryMetrics(metrics []*io_prometheus_client.Metric) []*M
 			case METRICS_IMAGE_LABEL:
 				memoryMetric.Image = label.GetValue()
 			case METRICS_ID_LABEL:
-				memoryMetric.Id = label.GetValue()
+				continue
 			default:
 				panic(label.GetName())
 			}

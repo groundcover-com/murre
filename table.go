@@ -45,17 +45,20 @@ func (t *Table) Update(stats []*Stats) {
 			}
 		}
 		t.table.ScrollToBeginning()
-
 	})
 }
 
 func (t *Table) updateColumns() {
-	yel := tcell.ColorAliceBlue
-	t.table.SetCell(0, 0, tview.NewTableCell("namespace").SetExpansion(1).SetAlign(tview.AlignCenter)).SetTitleColor(yel)
-	t.table.SetCell(0, 1, tview.NewTableCell("pod").SetExpansion(1).SetAlign(tview.AlignCenter)).SetTitleColor(yel)
-	t.table.SetCell(0, 2, tview.NewTableCell("container").SetExpansion(1).SetAlign(tview.AlignCenter)).SetTitleColor(yel)
-	t.table.SetCell(0, 3, tview.NewTableCell("cpu").SetExpansion(1).SetAlign(tview.AlignCenter)).SetTitleColor(yel)
-	t.table.SetCell(0, 4, tview.NewTableCell("mem").SetExpansion(1).SetAlign(tview.AlignCenter)).SetTitleColor(yel)
+	blue := tcell.ColorBlue
+	t.table.SetCell(0, 0, t.createColumnCell("Namespace").SetTextColor(blue))
+	t.table.SetCell(0, 1, t.createColumnCell("Pod").SetTextColor(blue))
+	t.table.SetCell(0, 2, t.createColumnCell("Container").SetTextColor(blue))
+	t.table.SetCell(0, 3, t.createColumnCell("CPU").SetTextColor(blue))
+	t.table.SetCell(0, 4, t.createColumnCell("Memory").SetTextColor(blue))
+}
+
+func (t *Table) createColumnCell(text string) *tview.TableCell {
+	return tview.NewTableCell(text).SetAlign(tview.AlignCenter).SetTextColor(tcell.ColorBlue).SetBackgroundColor(tcell.ColorDarkGray)
 }
 
 func (t *Table) getCell(stats *Stats, column int) *tview.TableCell {
@@ -67,19 +70,38 @@ func (t *Table) getCell(stats *Stats, column int) *tview.TableCell {
 	case 2:
 		return tview.NewTableCell(stats.ContainerName)
 	case 3:
-		if stats.CpuUsage <= 0 {
-			return tview.NewTableCell("-").SetAlign(tview.AlignCenter)
+		if stats.CpuUsageMilli <= 0 {
+			return tview.NewTableCell("\u23F1").SetAlign(tview.AlignCenter)
 		}
-		cpuInMcpu := stats.CpuUsage * 1000
-		return tview.NewTableCell(fmt.Sprintf("%.2fmCPU", cpuInMcpu))
+		if stats.CpuUsagePercent > 0 {
+			color := t.getCellColor(stats.CpuUsagePercent)
+			return tview.NewTableCell(fmt.Sprintf("%.0f/%.0fmCPU (%.1f%%)", stats.CpuUsageMilli, stats.CpuLimit, stats.CpuUsagePercent)).SetTextColor(color)
+		}
+		return tview.NewTableCell(fmt.Sprintf("%.0fmCPU", stats.CpuUsageMilli))
 	case 4:
 		if stats.MemoryBytes <= 0 {
-			return tview.NewTableCell("-").SetAlign(tview.AlignCenter)
+			return tview.NewTableCell("\u23F1").SetAlign(tview.AlignCenter)
 		}
+
 		//convet bytes to MiB
 		memoryInMiB := stats.MemoryBytes / 1024 / 1024
-		return tview.NewTableCell(fmt.Sprintf("%.2fMiB", memoryInMiB))
+		memoryLimitInMib := stats.MemoryLimitBytes / 1024 / 1024
+		if stats.MemoryUsagePercent > 0 {
+			color := t.getCellColor(stats.MemoryUsagePercent)
+			return tview.NewTableCell(fmt.Sprintf("%.0f/%.0fMiB (%.1f%%)", memoryInMiB, memoryLimitInMib, stats.MemoryUsagePercent)).SetTextColor(color)
+		}
+		return tview.NewTableCell(fmt.Sprintf("%.0fMiB/-", memoryInMiB))
 	default:
 		return nil
 	}
+}
+
+func (t *Table) getCellColor(utilization float64) tcell.Color {
+	if utilization > 80 {
+		return tcell.ColorYellow
+	}
+	if utilization > 90 {
+		return tcell.ColorRed
+	}
+	return tcell.ColorWhite
 }
