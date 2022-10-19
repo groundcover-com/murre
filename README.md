@@ -33,6 +33,15 @@ go install github.com/groundcover-com/murre@latest
 
 ## Using Murre
 - Detect pods and containers with high CPU or memory utilization
+```bash
+murre --sortby-cpu-util
+```
 - Find out how much of CPU and memory does a specific pod consumes
-
+```bash
+murre --pod kong-51xst
+```
+- Focus on the resource consumption metrics in a specific namespace
+```bash
+murre --namespace production
+```
 
