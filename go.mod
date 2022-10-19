@@ -1,4 +1,4 @@
-module github.com/murre
+module github.com/groundcover-com/murre
 
 go 1.19
 
