@@ -4,7 +4,7 @@
     <img src="images/logo.png" width="25%" alt="murre" title="murre" />
    </p>
     <h2>On demand Kubernetes metrics at scale</h2>
-   <a href="link_to_blog"><strong>Read More »</strong></a>
+   <a href="https://groundcover.com/blog/murre"><strong>Read More »</strong></a>
   <p>
 
 
@@ -20,13 +20,18 @@
 Murre is an **on-demand, scaleable source of container resource metrics for K8s**.
 
 Murre fetchs CPU & memory resource metrics directly from the kubelet on each K8s Node.
-Murre also enrich the resources with the relevant K8s requests and limits from each PodSpec.
+Murre also enriches the resources with the relevant K8s requests and limits from each PodSpec.
 
-## Why murre?
+## Why Murre?
 Murre is a simple, stateless and minimilistic approach to K8s resource monitoring that works at any scale.
 Murre is free of any third-party dependencies, requiring nothing to be installed on the cluster.
 
-## What is Murre useful for?
+## Installing Murre
+```go
+go install github.com/groundcover-com/murre@latest
+```
+
+## Using Murre
 - Detect pods and containers with high CPU or memory utilization
 - Find out how much of CPU and memory does a specific pod consumes
 
