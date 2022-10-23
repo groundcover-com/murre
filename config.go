@@ -46,7 +46,7 @@ type Config struct {
 }
 
 func newConfig(v *viper.Viper, args []string) (*Config, error) {
-	flagSet := pflag.NewFlagSet("murre", pflag.ContinueOnError)
+	flagSet := pflag.NewFlagSet("murre", pflag.ExitOnError)
 	flagSet.Usage = func() {
 		fmt.Println("Usage: murre [options]")
 		flagSet.PrintDefaults()
