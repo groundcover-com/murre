@@ -25,6 +25,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	if config == nil {
+		return
+	}
 
 	table := CreateNewTable()
 	murre, err := NewMurre(table, config)
