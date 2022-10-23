@@ -9,6 +9,10 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+const (
+	KUBECONFIG_ENV_NAME = "kubeconfig"
+)
+
 var (
 	defaultRefreshInterval = time.Second * 5
 )
@@ -56,6 +60,7 @@ func newConfig(v *viper.Viper, args []string) (*Config, error) {
 	} else {
 		flagSet.String("kubeconfig", "", "absolute path to the kubeconfig file")
 	}
+	v.BindEnv(KUBECONFIG_ENV_NAME)
 
 	err := flagSet.Parse(args)
 	if err != nil {
