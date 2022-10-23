@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 	"time"
 
@@ -45,7 +46,11 @@ type Config struct {
 }
 
 func newConfig(v *viper.Viper, args []string) (*Config, error) {
-	flagSet := pflag.NewFlagSet("murre", pflag.ExitOnError)
+	flagSet := pflag.NewFlagSet("murre", pflag.ContinueOnError)
+	flagSet.Usage = func() {
+		fmt.Println("Usage: murre [options]")
+		flagSet.PrintDefaults()
+	}
 
 	flagSet.Duration("interval", defaultRefreshInterval, "seconds to wait between updates (default '5s')")
 	flagSet.String("namespace", "", "filter by namespace")
@@ -55,6 +60,7 @@ func newConfig(v *viper.Viper, args []string) (*Config, error) {
 	flagSet.Bool("sortby-cpu-util", false, "sort by cpu utilization")
 	flagSet.Bool("sortby-mem", false, "sort by memory")
 	flagSet.Bool("sortby-mem-util", false, "sort by memory utilization")
+	flagSet.Bool("help", false, "show help")
 	if home := homedir.HomeDir(); home != "" {
 		flagSet.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 	} else {
@@ -70,6 +76,11 @@ func newConfig(v *viper.Viper, args []string) (*Config, error) {
 	err = v.BindPFlags(flagSet)
 	if err != nil {
 		return nil, err
+	}
+
+	if v.GetBool("help") {
+		flagSet.Usage()
+		return nil, nil
 	}
 
 	return &Config{
