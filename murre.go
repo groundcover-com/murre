@@ -97,7 +97,6 @@ func (m *Murre) Stop() {
 }
 
 func (m *Murre) tick() error {
-	fmt.Printf("tick")
 	defer func() {
 		m.fetchCounter++
 	}()
