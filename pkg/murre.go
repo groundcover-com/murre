@@ -1,10 +1,12 @@
-package main
+package murre
 
 import (
 	"fmt"
 	"sort"
 	"time"
 
+	"github.com/groundcover-com/murre/internal/config"
+	"github.com/groundcover-com/murre/pkg/k8s"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/tools/clientcmd"
@@ -15,12 +17,12 @@ const (
 )
 
 type DataFetcher interface {
-	GetMetrics() ([]*NodeMetrics, error)
-	GetContainers() ([]*ContainerResources, error)
+	GetMetrics() ([]*k8s.NodeMetrics, error)
+	GetContainers() ([]*k8s.ContainerResources, error)
 }
 
 type UI interface {
-	Update(stats []*Stats)
+	Update(stats []*k8s.Stats)
 }
 
 type ContainerStats struct {
@@ -35,13 +37,13 @@ type ContainerStats struct {
 type Murre struct {
 	fetcher      DataFetcher
 	ui           UI
-	config       *Config
-	containers   map[string]*Container
+	config       *config.Config
+	containers   map[string]*k8s.Container
 	fetchCounter int
 	stopCh       chan struct{}
 }
 
-func NewMurre(ui UI, config *Config) (*Murre, error) {
+func NewMurre(ui UI, config *config.Config) (*Murre, error) {
 	// use the current context in kubeconfig
 	kubecfg, err := clientcmd.BuildConfigFromFlags("", config.Kubeconfig)
 	if err != nil {
@@ -54,7 +56,7 @@ func NewMurre(ui UI, config *Config) (*Murre, error) {
 		return nil, err
 	}
 
-	fetcher := NewFetcher(clientset)
+	fetcher := k8s.NewFetcher(clientset)
 	if fetcher == nil {
 		return nil, err
 	}
@@ -63,7 +65,7 @@ func NewMurre(ui UI, config *Config) (*Murre, error) {
 		fetcher:      fetcher,
 		ui:           ui,
 		config:       config,
-		containers:   make(map[string]*Container),
+		containers:   make(map[string]*k8s.Container),
 		stopCh:       make(chan struct{}),
 		fetchCounter: 0,
 	}, nil
@@ -134,8 +136,8 @@ func (m *Murre) updateContainers() error {
 	return nil
 }
 
-func (m *Murre) filter(stats []*Stats) []*Stats {
-	filterdStats := make([]*Stats, 0)
+func (m *Murre) filter(stats []*k8s.Stats) []*k8s.Stats {
+	filterdStats := make([]*k8s.Stats, 0)
 	for _, s := range stats {
 		isNamespaceMatch := m.config.Filters.Namespace == "" || m.config.Filters.Namespace == s.Namespace
 		isPodMatch := m.config.Filters.Pod == "" || m.config.Filters.Pod == s.PodName
@@ -147,7 +149,7 @@ func (m *Murre) filter(stats []*Stats) []*Stats {
 	return filterdStats
 }
 
-func (m *Murre) sort(stats []*Stats) {
+func (m *Murre) sort(stats []*k8s.Stats) {
 	if m.config.SortBy.Mem {
 		sort.Slice(stats, func(i, j int) bool {
 			return stats[i].MemoryBytes > stats[j].MemoryBytes
@@ -182,8 +184,8 @@ func (m *Murre) sort(stats []*Stats) {
 	})
 }
 
-func (m *Murre) getStats() []*Stats {
-	containersStats := make([]*Stats, 0)
+func (m *Murre) getStats() []*k8s.Stats {
+	containersStats := make([]*k8s.Stats, 0)
 	for _, c := range m.containers {
 		stats := c.GetStats()
 		if stats == nil {
@@ -212,32 +214,32 @@ func (m *Murre) updateMetrics() error {
 	return nil
 }
 
-func (m *Murre) updateCpu(cpu []*Cpu, fetchTime time.Time) {
+func (m *Murre) updateCpu(cpu []*k8s.Cpu, fetchTime time.Time) {
 	for _, c := range cpu {
 		container := m.getOrCreateContainerFromCpu(c)
 		container.UpdateCpu(c, fetchTime)
 	}
 }
 
-func (m *Murre) updateMemory(memory []*Memory, fetchTime time.Time) {
+func (m *Murre) updateMemory(memory []*k8s.Memory, fetchTime time.Time) {
 	for _, mem := range memory {
 		container := m.getOrCreateContainerFromMemory(mem)
 		container.UpdateMemory(mem, fetchTime)
 	}
 }
 
-func (m *Murre) getOrCreateContainerFromCpu(cpu *Cpu) *Container {
+func (m *Murre) getOrCreateContainerFromCpu(cpu *k8s.Cpu) *k8s.Container {
 	return m.getOrCreateContainer(cpu.Name, cpu.Image, cpu.PodName, cpu.Namespace)
 }
 
-func (m *Murre) getOrCreateContainerFromMemory(mem *Memory) *Container {
+func (m *Murre) getOrCreateContainerFromMemory(mem *k8s.Memory) *k8s.Container {
 	return m.getOrCreateContainer(mem.Name, mem.Image, mem.PodName, mem.Namespace)
 }
 
-func (m *Murre) getOrCreateContainer(name, image, podName, namespace string) *Container {
+func (m *Murre) getOrCreateContainer(name, image, podName, namespace string) *k8s.Container {
 	id := fmt.Sprintf("%s/%s/%s", namespace, podName, name)
 	if _, ok := m.containers[id]; !ok {
-		m.containers[id] = &Container{
+		m.containers[id] = &k8s.Container{
 			Id:        id,
 			Name:      name,
 			Image:     image,

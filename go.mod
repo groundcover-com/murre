@@ -13,6 +13,8 @@ require (
 	k8s.io/client-go v0.25.3
 )
 
+require github.com/inconshreveable/mousetrap v1.0.1 // indirect
+
 require (
 	cloud.google.com/go/compute v1.6.1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -54,6 +56,7 @@ require (
 	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
