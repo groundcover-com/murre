@@ -97,6 +97,7 @@ func (m *Murre) Stop() {
 }
 
 func (m *Murre) tick() error {
+	fmt.Printf("tick")
 	defer func() {
 		m.fetchCounter++
 	}()
@@ -172,6 +173,13 @@ func (m *Murre) sort(stats []*Stats) {
 	if m.config.SortBy.MemUtilization {
 		sort.Slice(stats, func(i, j int) bool {
 			return stats[i].MemoryUsagePercent > stats[j].MemoryUsagePercent
+		})
+		return
+	}
+
+	if m.config.SortBy.PodName {
+		sort.Slice(stats, func(i, j int) bool {
+			return stats[i].PodName < stats[j].PodName
 		})
 		return
 	}

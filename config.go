@@ -36,6 +36,8 @@ type SortBy struct {
 	Mem bool
 	// sort by memory utilization
 	MemUtilization bool
+	// sort by pod name
+	PodName bool
 }
 
 type Config struct {
@@ -60,6 +62,7 @@ func newConfig(v *viper.Viper, args []string) (*Config, error) {
 	flagSet.Bool("sortby-cpu-util", false, "sort by cpu utilization")
 	flagSet.Bool("sortby-mem", false, "sort by memory")
 	flagSet.Bool("sortby-mem-util", false, "sort by memory utilization")
+	flagSet.Bool("sortby-pod-name", false, "sort by pod name")
 	flagSet.Bool("help", false, "show help")
 	if home := homedir.HomeDir(); home != "" {
 		flagSet.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
@@ -95,6 +98,7 @@ func newConfig(v *viper.Viper, args []string) (*Config, error) {
 			CpuUtilization: v.GetBool("sortby-cpu-util"),
 			Mem:            v.GetBool("sortby-mem"),
 			MemUtilization: v.GetBool("sortby-mem-util"),
+			PodName:        v.GetBool("sortby-pod-name"),
 		},
 		Kubeconfig: v.GetString("kubeconfig"),
 	}, nil
