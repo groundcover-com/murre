@@ -1,0 +1,30 @@
+project_name: murre
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+builds:
+  -
+    main: ./
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+archives:
+  -
+    format: tar.gz
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    files:
+      - none*
+checksum:
+  algorithm: sha256
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums'
+changelog:
+  use: github-native
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
