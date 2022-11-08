@@ -178,6 +178,13 @@ func (m *Murre) sort(stats []*k8s.Stats) {
 		return
 	}
 
+	if m.config.SortBy.PodName {
+		sort.Slice(stats, func(i, j int) bool {
+			return stats[i].PodName < stats[j].PodName
+		})
+		return
+	}
+
 	//default is to sort by cpu
 	sort.Slice(stats, func(i, j int) bool {
 		return stats[i].CpuUsageMilli > stats[j].CpuUsageMilli

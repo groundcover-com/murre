@@ -97,6 +97,12 @@ func initMurreFlags() {
 		false,
 		"sort by memory utilization",
 	)
+	RootCmd.Flags().BoolVar(
+		&murreConfig.SortBy.PodName,
+		"sortby-pod-name",
+		false,
+		"sort by pod name",
+	)
 
 	if home := homedir.HomeDir(); home != "" {
 		RootCmd.Flags().StringVar(

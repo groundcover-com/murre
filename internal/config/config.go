@@ -30,6 +30,8 @@ type SortBy struct {
 	Mem bool
 	// sort by memory utilization
 	MemUtilization bool
+	// sort by pod name
+	PodName bool
 }
 
 type Config struct {
