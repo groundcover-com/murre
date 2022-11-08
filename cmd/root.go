@@ -22,7 +22,6 @@ var RootCmd = &cobra.Command{
 	Use:               "murre",
 	Short:             "murre is a command line tool to monitor kubernetes resources",
 	SilenceErrors:     true,
-	SilenceUsage:      true,
 	CompletionOptions: cobra.CompletionOptions{DisableDefaultCmd: true},
 	Long:              `murre is a command line tool to monitor kubernetes resources`,
 	RunE:              run,
@@ -53,7 +52,7 @@ func initMurreFlags() {
 		&murreConfig.RefreshInterval,
 		"interval",
 		config.DefaultRefreshInterval,
-		"seconds to wait between updates (default '5s')",
+		"seconds to wait between updates",
 	)
 	RootCmd.Flags().StringVar(
 		&murreConfig.Filters.Namespace,
