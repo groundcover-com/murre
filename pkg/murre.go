@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/groundcover-com/murre/internal/config"
+	"github.com/groundcover-com/murre/pkg/config"
 	"github.com/groundcover-com/murre/pkg/k8s"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

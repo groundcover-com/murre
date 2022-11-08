@@ -3,9 +3,9 @@ package cmd
 import (
 	"path/filepath"
 
-	"github.com/groundcover-com/murre/internal/config"
-	"github.com/groundcover-com/murre/internal/ui"
 	murre "github.com/groundcover-com/murre/pkg"
+	"github.com/groundcover-com/murre/pkg/config"
+	"github.com/groundcover-com/murre/pkg/ui"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
 )
