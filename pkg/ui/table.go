@@ -1,9 +1,11 @@
-package main
+package ui
 
 import (
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/groundcover-com/murre/pkg/k8s"
+
 	"github.com/rivo/tview"
 )
 
@@ -35,7 +37,7 @@ func (t *Table) Draw() error {
 	return t.app.Run()
 }
 
-func (t *Table) Update(stats []*Stats) {
+func (t *Table) Update(stats []*k8s.Stats) {
 	t.app.QueueUpdateDraw(func() {
 		t.table.Clear()
 		t.updateColumns()
@@ -61,7 +63,7 @@ func (t *Table) createColumnCell(text string) *tview.TableCell {
 	return tview.NewTableCell(text).SetAlign(tview.AlignCenter).SetTextColor(tcell.ColorBlue).SetBackgroundColor(tcell.ColorDarkGray)
 }
 
-func (t *Table) getCell(stats *Stats, column int) *tview.TableCell {
+func (t *Table) getCell(stats *k8s.Stats, column int) *tview.TableCell {
 	switch column {
 	case 0:
 		return tview.NewTableCell(stats.Namespace)
@@ -100,10 +102,10 @@ func (t *Table) getCellColor(utilization float64) tcell.Color {
 	if utilization > 90 {
 		return tcell.ColorRed
 	}
-	
+
 	if utilization > 80 {
 		return tcell.ColorYellow
 	}
-	
+
 	return tcell.ColorWhite
 }
