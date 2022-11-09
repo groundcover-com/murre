@@ -15,20 +15,21 @@ We use the following categories for changes:
 - `Security` in case of vulnerabilities.
 
 ## [Unreleased]
-
 ### Added
+### Changed
+### Fixed
+### Removed
+### Deprecated
+### Security
 
+## [0.0.4] - 2022-11-09
+### Added
 - added gorelease and workflows to repo [#sc-5375]
 - added sortby-pod-name flag [#sc-5572]
 
 ### Changed
 - changed project directory structure [#sc-5598]
-
 ### Fixed
-
 ### Removed
-
 ### Deprecated
-
 ### Security
-
