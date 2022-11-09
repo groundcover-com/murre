@@ -19,8 +19,10 @@ We use the following categories for changes:
 ### Added
 
 - added gorelease and workflows to repo [#sc-5375]
+- added sortby-pod-name flag [#sc-5572]
 
 ### Changed
+- changed project directory structure [#sc-5598]
 
 ### Fixed
 
