@@ -80,6 +80,7 @@ func (p *Parser) Parse(b []byte) ([]*Cpu, []*Memory, error) {
 
 func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu {
 	cpuMetrics := make([]*Cpu, 0, len(metrics))
+	lastName,lastPodName,lastNamespace := "","",""
 	for _, metric := range metrics {
 		labels := metric.GetLabel()
 		if len(labels) == 0 {
@@ -106,9 +107,20 @@ func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu 
 		}
 
 		cpuMetric.CpuUsageSecondsTotal = metric.GetCounter().GetValue()
-		if cpuMetric.Name == "" || cpuMetric.PodName == "" || cpuMetric.Namespace == "" {
-			//todo - dont know why this happens
-			continue
+		if cpuMetric.Name == "" {
+			cpuMetric.Name = lastName
+		} else {
+			lastName = cpuMetric.Name
+		}
+		if cpuMetric.PodName == "" {
+			cpuMetric.PodName = lastPodName
+		} else {
+			lastPodName = cpuMetric.PodName
+		}
+		if cpuMetric.Namespace == "" {
+			cpuMetric.Namespace = lastNamespace
+		} else {
+			lastNamespace = cpuMetric.Namespace
 		}
 		cpuMetrics = append(cpuMetrics, cpuMetric)
 	}
