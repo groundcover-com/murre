@@ -80,7 +80,7 @@ func (p *Parser) Parse(b []byte) ([]*Cpu, []*Memory, error) {
 
 func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu {
 	cpuMetrics := make([]*Cpu, 0, len(metrics))
-	lastName,lastPodName,lastNamespace := "","",""
+	// lastName,lastPodName,lastNamespace := "","",""
 	for _, metric := range metrics {
 		labels := metric.GetLabel()
 		if len(labels) == 0 {
@@ -107,7 +107,12 @@ func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu 
 		}
 
 		cpuMetric.CpuUsageSecondsTotal = metric.GetCounter().GetValue()
-		if cpuMetric.Name == "" {
+		if cpuMetric.PodName == "" || cpuMetric.Namespace == "" {
+			//done - I know why this happens
+			//see https://github.com/google/cadvisor/issues/1873
+			continue
+		}
+		/*if cpuMetric.Name == "" {
 			cpuMetric.Name = lastName
 		} else {
 			lastName = cpuMetric.Name
@@ -121,7 +126,7 @@ func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu 
 			cpuMetric.Namespace = lastNamespace
 		} else {
 			lastNamespace = cpuMetric.Namespace
-		}
+		}*/
 		cpuMetrics = append(cpuMetrics, cpuMetric)
 	}
 	return cpuMetrics
