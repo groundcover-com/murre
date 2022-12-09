@@ -47,7 +47,7 @@ func NewFetcher(clientset *kubernetes.Clientset) *Fetcher {
 	}
 }
 
-func (f *Fetcher) GetMetrics() ([]*NodeMetrics, error) {
+func (f *Fetcher) GetMetrics(emptyContainer bool) ([]*NodeMetrics, error) {
 	nodes, err := f.getNodes()
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (f *Fetcher) GetMetrics() ([]*NodeMetrics, error) {
 
 	metrics := make([]*NodeMetrics, 0)
 	for _, node := range nodes {
-		nodeMetric, err := f.fetchMetricsFromNode(node)
+		nodeMetric, err := f.fetchMetricsFromNode(node, emptyContainer)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +128,7 @@ func (f *Fetcher) getNodes() ([]string, error) {
 	return f.nodes, nil
 }
 
-func (f *Fetcher) fetchMetricsFromNode(node string) (*NodeMetrics, error) {
+func (f *Fetcher) fetchMetricsFromNode(node string, emptyContainer bool) (*NodeMetrics, error) {
 	fetchTime := time.Now()
 	path := fmt.Sprintf(CADVISOR_PATH_TEMPLATE, node)
 	b, err := f.clientset.RESTClient().Get().AbsPath(path).Do(context.Background()).Raw()
@@ -136,7 +136,7 @@ func (f *Fetcher) fetchMetricsFromNode(node string) (*NodeMetrics, error) {
 		return nil, err
 	}
 
-	cpu, memory, err := f.metricsParser.Parse(b)
+	cpu, memory, err := f.metricsParser.Parse(b, emptyContainer)
 	if err != nil {
 		return nil, err
 	}

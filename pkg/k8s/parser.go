@@ -48,7 +48,7 @@ func NewParser() *Parser {
 	return &Parser{}
 }
 
-func (p *Parser) Parse(b []byte) ([]*Cpu, []*Memory, error) {
+func (p *Parser) Parse(b []byte, emptyContainer bool) ([]*Cpu, []*Memory, error) {
 	reader := bytes.NewReader(b)
 
 	var parser expfmt.TextParser
@@ -65,7 +65,7 @@ func (p *Parser) Parse(b []byte) ([]*Cpu, []*Memory, error) {
 			if len(metrics) == 0 {
 				panic(0)
 			}
-			cpuMetrics = append(cpuMetrics, p.parseCpuMetrics(metrics)...)
+			cpuMetrics = append(cpuMetrics, p.parseCpuMetrics(metrics, emptyContainer)...)
 		}
 		if k == CONTAINER_MEM_METRICS {
 			metrics := v.GetMetric()
@@ -78,7 +78,7 @@ func (p *Parser) Parse(b []byte) ([]*Cpu, []*Memory, error) {
 	return cpuMetrics, memoryMetrics, nil
 }
 
-func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu {
+func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric, emptyContainer bool) []*Cpu {
 	cpuMetrics := make([]*Cpu, 0, len(metrics))
 	for _, metric := range metrics {
 		labels := metric.GetLabel()
@@ -106,8 +106,9 @@ func (p *Parser) parseCpuMetrics(metrics []*io_prometheus_client.Metric) []*Cpu 
 		}
 
 		cpuMetric.CpuUsageSecondsTotal = metric.GetCounter().GetValue()
-		if cpuMetric.Name == "" || cpuMetric.PodName == "" || cpuMetric.Namespace == "" {
-			//todo - dont know why this happens
+		if (!emptyContainer && cpuMetric.Name == "")  || cpuMetric.PodName == "" || cpuMetric.Namespace == "" {
+			//done - I know why this happens
+			//see https://github.com/google/cadvisor/issues/1873
 			continue
 		}
 		cpuMetrics = append(cpuMetrics, cpuMetric)

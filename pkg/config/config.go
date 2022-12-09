@@ -19,6 +19,8 @@ type Filter struct {
 	Pod string
 	// filter by container
 	Container string
+	// include metrics without container name
+	EmptyContainer  bool
 }
 
 type SortBy struct {
