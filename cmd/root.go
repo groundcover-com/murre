@@ -73,6 +73,12 @@ func initMurreFlags() {
 		"filter by container",
 	)
 	RootCmd.Flags().BoolVar(
+		&murreConfig.Filters.EmptyContainer,
+		"empty-container",
+		false,
+		"metrics with no container name",
+	)
+	RootCmd.Flags().BoolVar(
 		&murreConfig.SortBy.Cpu,
 		"sortby-cpu",
 		false,
