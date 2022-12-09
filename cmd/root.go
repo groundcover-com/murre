@@ -39,7 +39,6 @@ func Execute() error {
         return err
 }
 
-
 func run(cmd *cobra.Command, args []string) error {
 	table := ui.CreateNewTable()
 	murre, err := murre.NewMurre(table, murreConfig)
