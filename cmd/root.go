@@ -28,7 +28,15 @@ var RootCmd = &cobra.Command{
 }
 
 func Execute() error {
-	return RootCmd.Execute()
+        err :=  RootCmd.Execute() // fix isse #24 - Show errors on pgm startup
+        if err != nil {
+                // There was an error! Print the error message and exit. Or do whatever you'd like!
+                // This includes errors like "invalid argument" etc.
+                fmt.Println(err)
+                // os.Exit(1)
+                // the function returns the error in this case
+        }
+        return err
 }
 
 func run(cmd *cobra.Command, args []string) error {
