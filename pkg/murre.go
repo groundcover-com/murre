@@ -17,7 +17,7 @@ const (
 )
 
 type DataFetcher interface {
-	GetMetrics() ([]*k8s.NodeMetrics, error)
+	GetMetrics(emptyContainer bool) ([]*k8s.NodeMetrics, error)
 	GetContainers() ([]*k8s.ContainerResources, error)
 }
 
@@ -210,7 +210,7 @@ func (m *Murre) getStats() []*k8s.Stats {
 }
 
 func (m *Murre) updateMetrics() error {
-	metrics, err := m.fetcher.GetMetrics()
+	metrics, err := m.fetcher.GetMetrics(m.config.Filters.EmptyContainer)
 	if err != nil {
 		return err
 	}
