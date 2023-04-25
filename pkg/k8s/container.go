@@ -8,6 +8,7 @@ type Container struct {
 	Id                         string
 	Name                       string
 	Image                      string
+	NodeName                   string
 	PodName                    string
 	Namespace                  string
 	cpuUsage                   float64
@@ -22,6 +23,7 @@ type Container struct {
 
 type Stats struct {
 	Namespace          string
+	NodeName           string
 	PodName            string
 	ContainerName      string
 	CpuUsageMilli      float64
@@ -59,6 +61,7 @@ func (c *Container) GetStats() *Stats {
 
 	return &Stats{
 		Namespace:          c.Namespace,
+		NodeName:           c.NodeName,
 		PodName:            c.PodName,
 		ContainerName:      c.Name,
 		CpuUsageMilli:      cpuUsageInMillis,

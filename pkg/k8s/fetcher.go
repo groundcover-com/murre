@@ -23,6 +23,7 @@ type ContainerResources struct {
 	PodName   string
 	Name      string
 	Namespace string
+	NodeName  string
 	Image     string
 	Request   Resources
 	Limit     Resources
@@ -81,6 +82,7 @@ func (f *Fetcher) GetContainers() ([]*ContainerResources, error) {
 				PodName:   pod.Name,
 				Name:      container.Name,
 				Namespace: pod.Namespace,
+				NodeName:  pod.Spec.NodeName,
 				Image:     container.Image,
 				Request: Resources{
 					Cpu:    0,

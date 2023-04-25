@@ -15,6 +15,8 @@ var (
 type Filter struct {
 	// filter by namespace
 	Namespace string
+	// filter by node
+	Node string
 	// filter by pod
 	Pod string
 	// filter by container
