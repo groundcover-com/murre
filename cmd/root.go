@@ -61,6 +61,12 @@ func initMurreFlags() {
 		"filter by namespace",
 	)
 	RootCmd.Flags().StringVar(
+		&murreConfig.Filters.Node,
+		"node",
+		"",
+		"filter by node",
+	)
+	RootCmd.Flags().StringVar(
 		&murreConfig.Filters.Pod,
 		"pod",
 		"",

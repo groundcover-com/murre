@@ -129,7 +129,7 @@ func (m *Murre) updateContainers() error {
 	}
 
 	for _, c := range containers {
-		container := m.getOrCreateContainer(c.Name, c.Image, c.PodName, c.Namespace)
+		container := m.getOrCreateContainer(c.Name, c.Image, c.PodName, c.Namespace, c.NodeName)
 		container.UpdateResources(c)
 	}
 
@@ -140,9 +140,10 @@ func (m *Murre) filter(stats []*k8s.Stats) []*k8s.Stats {
 	filterdStats := make([]*k8s.Stats, 0)
 	for _, s := range stats {
 		isNamespaceMatch := m.config.Filters.Namespace == "" || m.config.Filters.Namespace == s.Namespace
+		isNodeMatch := m.config.Filters.Node == "" || m.config.Filters.Node == s.NodeName
 		isPodMatch := m.config.Filters.Pod == "" || m.config.Filters.Pod == s.PodName
 		isContainerMatch := m.config.Filters.Container == "" || m.config.Filters.Container == s.ContainerName
-		if isNamespaceMatch && isPodMatch && isContainerMatch {
+		if isNamespaceMatch && isNodeMatch && isPodMatch && isContainerMatch {
 			filterdStats = append(filterdStats, s)
 		}
 	}
@@ -215,35 +216,35 @@ func (m *Murre) updateMetrics() error {
 		return err
 	}
 	for _, node := range metrics {
-		m.updateCpu(node.Cpu, node.Timestamp)
-		m.updateMemory(node.Memory, node.Timestamp)
+		m.updateCpu(node.NodeName, node.Cpu, node.Timestamp)
+		m.updateMemory(node.NodeName, node.Memory, node.Timestamp)
 	}
 	return nil
 }
 
-func (m *Murre) updateCpu(cpu []*k8s.Cpu, fetchTime time.Time) {
+func (m *Murre) updateCpu(nodeName string, cpu []*k8s.Cpu, fetchTime time.Time) {
 	for _, c := range cpu {
-		container := m.getOrCreateContainerFromCpu(c)
+		container := m.getOrCreateContainerFromCpu(nodeName, c)
 		container.UpdateCpu(c, fetchTime)
 	}
 }
 
-func (m *Murre) updateMemory(memory []*k8s.Memory, fetchTime time.Time) {
+func (m *Murre) updateMemory(nodeName string, memory []*k8s.Memory, fetchTime time.Time) {
 	for _, mem := range memory {
-		container := m.getOrCreateContainerFromMemory(mem)
+		container := m.getOrCreateContainerFromMemory(nodeName, mem)
 		container.UpdateMemory(mem, fetchTime)
 	}
 }
 
-func (m *Murre) getOrCreateContainerFromCpu(cpu *k8s.Cpu) *k8s.Container {
-	return m.getOrCreateContainer(cpu.Name, cpu.Image, cpu.PodName, cpu.Namespace)
+func (m *Murre) getOrCreateContainerFromCpu(nodeName string, cpu *k8s.Cpu) *k8s.Container {
+	return m.getOrCreateContainer(cpu.Name, cpu.Image, cpu.PodName, cpu.Namespace, nodeName)
 }
 
-func (m *Murre) getOrCreateContainerFromMemory(mem *k8s.Memory) *k8s.Container {
-	return m.getOrCreateContainer(mem.Name, mem.Image, mem.PodName, mem.Namespace)
+func (m *Murre) getOrCreateContainerFromMemory(nodeName string, mem *k8s.Memory) *k8s.Container {
+	return m.getOrCreateContainer(mem.Name, mem.Image, mem.PodName, mem.Namespace, nodeName)
 }
 
-func (m *Murre) getOrCreateContainer(name, image, podName, namespace string) *k8s.Container {
+func (m *Murre) getOrCreateContainer(name, image, podName, namespace, nodeName string) *k8s.Container {
 	id := fmt.Sprintf("%s/%s/%s", namespace, podName, name)
 	if _, ok := m.containers[id]; !ok {
 		m.containers[id] = &k8s.Container{
@@ -252,6 +253,7 @@ func (m *Murre) getOrCreateContainer(name, image, podName, namespace string) *k8
 			Image:     image,
 			PodName:   podName,
 			Namespace: namespace,
+			NodeName:  nodeName,
 		}
 	}
 
