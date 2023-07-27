@@ -137,16 +137,16 @@ func (m *Murre) updateContainers() error {
 }
 
 func (m *Murre) filter(stats []*k8s.Stats) []*k8s.Stats {
-	filterdStats := make([]*k8s.Stats, 0)
+	filteredStats := make([]*k8s.Stats, 0)
 	for _, s := range stats {
 		isNamespaceMatch := m.config.Filters.Namespace == "" || m.config.Filters.Namespace == s.Namespace
 		isPodMatch := m.config.Filters.Pod == "" || m.config.Filters.Pod == s.PodName
 		isContainerMatch := m.config.Filters.Container == "" || m.config.Filters.Container == s.ContainerName
 		if isNamespaceMatch && isPodMatch && isContainerMatch {
-			filterdStats = append(filterdStats, s)
+			filteredStats = append(filteredStats, s)
 		}
 	}
-	return filterdStats
+	return filteredStats
 }
 
 func (m *Murre) sort(stats []*k8s.Stats) {
