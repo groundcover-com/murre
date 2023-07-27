@@ -19,7 +19,7 @@
 ## What is Murre?
 Murre is an **on-demand, scaleable source of container resource metrics for K8s**.
 
-Murre fetchs CPU & memory resource metrics directly from the kubelet on each K8s Node.
+Murre fetches CPU & memory resource metrics directly from the kubelet on each K8s Node.
 Murre also enriches the resources with the relevant K8s requests and limits from each PodSpec.
 
 ## Why Murre?
