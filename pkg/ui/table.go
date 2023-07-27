@@ -85,7 +85,7 @@ func (t *Table) getCell(stats *k8s.Stats, column int) *tview.TableCell {
 			return tview.NewTableCell("\u23F1").SetAlign(tview.AlignCenter)
 		}
 
-		//convet bytes to MiB
+		//convert bytes to MiB
 		memoryInMiB := stats.MemoryBytes / 1024 / 1024
 		memoryLimitInMib := stats.MemoryLimitBytes / 1024 / 1024
 		if stats.MemoryUsagePercent > 0 {
